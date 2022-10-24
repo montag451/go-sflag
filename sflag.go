@@ -3,7 +3,6 @@ package sflag
 import (
 	"flag"
 	"fmt"
-	"log"
 	"reflect"
 )
 
@@ -46,7 +45,6 @@ func Set(i any, fs *flag.FlagSet) {
 		}
 	}
 	getTags(&v, nil)
-	log.Println(tags)
 	fs.VisitAll(func(fl *flag.Flag) {
 		index := tags[fl.Name]
 		if index == nil {
