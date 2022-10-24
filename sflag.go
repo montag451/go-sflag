@@ -11,7 +11,7 @@ import (
 var TagKey = "flag"
 
 // Set sets the value of the fields in the struct contained in i with
-// the value of the flags defined in fs. It used the tag of the struct
+// the value of the flags defined in fs. It uses the tag of the struct
 // fields to determine the struct fields whose value should be set and
 // to determine the corresponding flag to use.
 func Set(i any, fs *flag.FlagSet) {
