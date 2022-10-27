@@ -11,10 +11,10 @@ import (
 // TagKey is the key used to retrieve informations about the flag in
 // the struct field tag. The value associated with the tag key must be
 // a comma separated list of three items:
-// - the name of the flag
-// - the default value for the flag
-// - the help message for the flag
-var TagKey = "flag"
+//   - the name of the flag
+//   - the default value for the flag
+//   - the help message for the flag
+const TagKey = "flag"
 
 func parseTag(v string) (name string, deflt string, help string) {
 	parts := strings.SplitN(v, ",", 3)
