@@ -150,10 +150,10 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 			if flv.Kind() == reflect.Pointer {
 				flv = flv.Elem()
 			}
-		}
-		if !flv.Type().AssignableTo(fiv.Type()) {
-			// Will panic if flag value is not convertible to field type
-			flv = flv.Convert(fiv.Type())
+			if !flv.Type().AssignableTo(fiv.Type()) {
+				// Will panic if flag value is not convertible to field type
+				flv = flv.Convert(fiv.Type())
+			}
 		}
 		fiv.Set(flv)
 	})
