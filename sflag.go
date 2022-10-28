@@ -131,7 +131,12 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 		if index == nil {
 			return
 		}
-		flv := reflect.ValueOf(fl.Value)
+		var flv reflect.Value
+		if getter, ok := fl.Value.(flag.Getter); ok {
+			flv = reflect.ValueOf(getter.Get())
+		} else {
+			flv = reflect.ValueOf(fl.Value)
+		}
 		fiv := v.FieldByIndex(index)
 		if !fiv.IsZero() && fl.Value.String() == fl.DefValue {
 			return
