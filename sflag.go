@@ -79,7 +79,7 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 			fs.String(name, "", help)
 		default:
 			i := reflect.TypeOf((*flag.Getter)(nil)).Elem()
-			if typ.Implements(i) || reflect.PointerTo(typ).Implements(i) {
+			if reflect.PointerTo(typ).Implements(i) {
 				var v reflect.Value
 				switch kind {
 				case reflect.Chan:
