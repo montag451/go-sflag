@@ -38,6 +38,9 @@ func AddFlags(fs *flag.FlagSet, s any) {
 func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 	fields := reflect.VisibleFields(v.Type())
 	for _, fi := range fields {
+		if fi.Anonymous || !fi.IsExported() {
+			continue
+		}
 		typ := fi.Type
 		kind := typ.Kind()
 		if kind == reflect.Pointer {
@@ -159,6 +162,9 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 func getFlagIndexes(indexes map[string][]int, v *reflect.Value, pindex []int) {
 	fields := reflect.VisibleFields(v.Type())
 	for _, fi := range fields {
+		if fi.Anonymous || !fi.IsExported() {
+			continue
+		}
 		index := make([]int, len(pindex)+len(fi.Index))
 		copy(index, pindex)
 		copy(index[len(pindex):], fi.Index)
