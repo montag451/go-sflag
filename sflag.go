@@ -102,7 +102,7 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 		if setDefault {
 			fl := fs.Lookup(name)
 			if err := fl.Value.Set(deflt); err != nil {
-				panic(fmt.Sprintf("invalid default value %q for flag %q", deflt, name))
+				panic(fmt.Sprintf("invalid default value %q for flag %q: %v", deflt, name, err))
 			}
 			fl.DefValue = fl.Value.String()
 		}
