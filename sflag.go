@@ -38,7 +38,12 @@ func AddFlags(fs *flag.FlagSet, s any) {
 func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 	fields := reflect.VisibleFields(v.Type())
 	for _, fi := range fields {
-		kind := fi.Type.Kind()
+		typ := fi.Type
+		kind := typ.Kind()
+		if kind == reflect.Pointer {
+			typ = fi.Type.Elem()
+			kind = typ.Kind()
+		}
 		tag := fi.Tag.Get(TagKey)
 		if tag == "" {
 			if kind == reflect.Struct {
@@ -59,37 +64,40 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 			fs.Int(name, 0, help)
 		case reflect.Uint:
 			fs.Uint(name, 0, help)
-		case reflect.Int64:
-			t := fi.Type
+		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			var d time.Duration
-			if t == reflect.TypeOf(d) {
+			if typ == reflect.TypeOf(d) {
 				fs.Duration(name, d, help)
 			} else {
 				fs.Int64(name, 0, help)
 			}
-		case reflect.Uint64:
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			fs.Uint64(name, 0, help)
-		case reflect.Float64:
+		case reflect.Float32, reflect.Float64:
 			fs.Float64(name, 0.0, help)
 		case reflect.String:
 			fs.String(name, "", help)
 		default:
 			i := reflect.TypeOf((*flag.Getter)(nil)).Elem()
-			var v reflect.Value
-			switch {
-			case fi.Type.Implements(i):
-				if fi.Type.Kind() == reflect.Pointer {
-					v = reflect.New(fi.Type.Elem())
-				} else {
-					v = reflect.New(fi.Type).Elem()
+			if typ.Implements(i) || reflect.PointerTo(typ).Implements(i) {
+				var v reflect.Value
+				switch kind {
+				case reflect.Chan:
+					v = reflect.MakeChan(typ, 0)
+				case reflect.Map:
+					v = reflect.MakeMap(typ)
+				case reflect.Slice:
+					v = reflect.MakeSlice(typ, 0, 0)
 				}
-			case reflect.PointerTo(fi.Type).Implements(i):
-				v = reflect.New(fi.Type)
-			default:
-				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", fi.Type, name, i))
+				pv := reflect.New(typ)
+				if v.IsValid() {
+					pv.Elem().Set(v)
+				}
+				fs.Var(pv.Interface().(flag.Value), name, help)
+				setDefault = false
+			} else {
+				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", typ, name, i))
 			}
-			fs.Var(v.Interface().(flag.Value), name, help)
-			setDefault = false
 		}
 		if setDefault {
 			fl := fs.Lookup(name)
@@ -129,17 +137,22 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 		if !fiv.IsZero() && fl.Value.String() == fl.DefValue {
 			return
 		}
-		switch {
-		case flv.Kind() == reflect.Pointer && flv.Type().Elem().AssignableTo(fiv.Type()):
-			fiv.Set(flv.Elem())
-		case fiv.Kind() == reflect.Pointer && fiv.Type().Elem().AssignableTo(flv.Type()):
-			if fiv.IsNil() {
-				fiv.Set(reflect.New(flv.Type()))
+		if fiv.Type() != flv.Type() {
+			if fiv.Kind() == reflect.Pointer {
+				if fiv.IsNil() {
+					fiv.Set(reflect.New(fiv.Type().Elem()))
+				}
+				fiv = fiv.Elem()
 			}
-			fiv.Elem().Set(flv)
-		default:
-			fiv.Set(flv)
+			if flv.Kind() == reflect.Pointer {
+				flv = flv.Elem()
+			}
 		}
+		if !flv.Type().AssignableTo(fiv.Type()) {
+			// Will panic if flag value is not convertible to field type
+			flv = flv.Convert(fiv.Type())
+		}
+		fiv.Set(flv)
 	})
 }
 
