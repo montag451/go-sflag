@@ -81,7 +81,7 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 		case reflect.String:
 			fs.String(name, "", help)
 		default:
-			i := reflect.TypeOf((*flag.Getter)(nil)).Elem()
+			i := reflect.TypeOf((*flag.Value)(nil)).Elem()
 			if !reflect.PointerTo(typ).Implements(i) {
 				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", typ, name, i))
 
@@ -131,11 +131,7 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 		if index == nil {
 			return
 		}
-		getter, ok := fl.Value.(flag.Getter)
-		if !ok {
-			return
-		}
-		flv := reflect.ValueOf(getter.Get())
+		flv := reflect.ValueOf(fl.Value)
 		fiv := v.FieldByIndex(index)
 		if !fiv.IsZero() && fl.Value.String() == fl.DefValue {
 			return
