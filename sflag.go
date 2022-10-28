@@ -149,13 +149,12 @@ func getFlagIndexes(indexes map[string][]int, v *reflect.Value, pindex []int) {
 		index := make([]int, len(pindex)+len(fi.Index))
 		copy(index, pindex)
 		copy(index[len(pindex):], fi.Index)
-		if fi.Type.Kind() == reflect.Struct {
-			fiv := v.FieldByIndex(fi.Index)
-			getFlagIndexes(indexes, &fiv, index)
-			continue
-		}
 		tag := fi.Tag.Get(TagKey)
 		if tag == "" {
+			if fi.Type.Kind() == reflect.Struct {
+				fiv := v.FieldByIndex(fi.Index)
+				getFlagIndexes(indexes, &fiv, index)
+			}
 			continue
 		}
 		name, _, _ := parseTag(tag)
