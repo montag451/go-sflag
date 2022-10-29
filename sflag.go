@@ -86,19 +86,7 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", typ, name, i))
 
 			}
-			var v reflect.Value
-			switch kind {
-			case reflect.Chan:
-				v = reflect.MakeChan(typ, 0)
-			case reflect.Map:
-				v = reflect.MakeMap(typ)
-			case reflect.Slice:
-				v = reflect.MakeSlice(typ, 0, 0)
-			}
 			pv := reflect.New(typ)
-			if v.IsValid() {
-				pv.Elem().Set(v)
-			}
 			fs.Var(pv.Interface().(flag.Value), name, help)
 			setDefault = false
 		}
