@@ -59,7 +59,6 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 		if fl := fs.Lookup(name); fl != nil {
 			panic(fmt.Sprintf("flag %q already defined", name))
 		}
-		setDefault := true
 		switch kind {
 		case reflect.Bool:
 			fs.Bool(name, false, help)
@@ -84,13 +83,11 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 			i := reflect.TypeOf((*flag.Value)(nil)).Elem()
 			if !reflect.PointerTo(typ).Implements(i) {
 				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", typ, name, i))
-
 			}
 			pv := reflect.New(typ)
 			fs.Var(pv.Interface().(flag.Value), name, help)
-			setDefault = false
 		}
-		if setDefault {
+		if deflt != "" {
 			fl := fs.Lookup(name)
 			if err := fl.Value.Set(deflt); err != nil {
 				panic(fmt.Sprintf("invalid default value %q for flag %q: %v", deflt, name, err))
