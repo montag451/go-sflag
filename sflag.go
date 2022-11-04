@@ -111,6 +111,10 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 	}
 	indexes := make(map[string][]int)
 	getFlagIndexes(indexes, &v, nil)
+	explicit := make(map[string]bool)
+	fs.Visit(func(fl *flag.Flag) {
+		explicit[fl.Name] = true
+	})
 	fs.VisitAll(func(fl *flag.Flag) {
 		index := indexes[fl.Name]
 		if index == nil {
@@ -123,7 +127,7 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 			flv = reflect.ValueOf(fl.Value)
 		}
 		fiv := v.FieldByIndex(index)
-		if !fiv.IsZero() && fl.Value.String() == fl.DefValue {
+		if !fiv.IsZero() && fl.Value.String() == fl.DefValue && !explicit[fl.Name] {
 			return
 		}
 		if fiv.Type() != flv.Type() {
