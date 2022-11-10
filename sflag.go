@@ -59,33 +59,33 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 		if fl := fs.Lookup(name); fl != nil {
 			panic(fmt.Sprintf("flag %q already defined", name))
 		}
-		switch kind {
-		case reflect.Bool:
-			fs.Bool(name, false, help)
-		case reflect.Int:
-			fs.Int(name, 0, help)
-		case reflect.Uint:
-			fs.Uint(name, 0, help)
-		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			var d time.Duration
-			if typ == reflect.TypeOf(d) {
-				fs.Duration(name, d, help)
-			} else {
-				fs.Int64(name, 0, help)
-			}
-		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			fs.Uint64(name, 0, help)
-		case reflect.Float32, reflect.Float64:
-			fs.Float64(name, 0.0, help)
-		case reflect.String:
-			fs.String(name, "", help)
-		default:
-			i := reflect.TypeOf((*flag.Value)(nil)).Elem()
-			if !reflect.PointerTo(typ).Implements(i) {
-				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", typ, name, i))
-			}
+		if i := reflect.TypeOf((*flag.Value)(nil)).Elem(); reflect.PointerTo(typ).Implements(i) {
 			pv := reflect.New(typ)
 			fs.Var(pv.Interface().(flag.Value), name, help)
+		} else {
+			switch kind {
+			case reflect.Bool:
+				fs.Bool(name, false, help)
+			case reflect.Int:
+				fs.Int(name, 0, help)
+			case reflect.Uint:
+				fs.Uint(name, 0, help)
+			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				var d time.Duration
+				if typ == reflect.TypeOf(d) {
+					fs.Duration(name, d, help)
+				} else {
+					fs.Int64(name, 0, help)
+				}
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				fs.Uint64(name, 0, help)
+			case reflect.Float32, reflect.Float64:
+				fs.Float64(name, 0.0, help)
+			case reflect.String:
+				fs.String(name, "", help)
+			default:
+				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", typ, name, i))
+			}
 		}
 		if deflt != "" {
 			fl := fs.Lookup(name)
