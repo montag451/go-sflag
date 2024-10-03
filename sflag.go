@@ -71,8 +71,10 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 			fs.Var(pv.Interface().(flag.Value), name, usage)
 		case ptrType.Implements(textUnmarshaler) && ptrType.Implements(textMarshaler):
 			pv := reflect.New(typ)
-			pvi := pv.Interface()
-			fs.TextVar(pvi.(encoding.TextUnmarshaler), name, pvi.(encoding.TextMarshaler), usage)
+			deflt := reflect.New(typ)
+			m := deflt.MethodByName("UnmarshalText")
+			m.Call([]reflect.Value{reflect.ValueOf([]byte(""))})
+			fs.TextVar(pv.Interface().(encoding.TextUnmarshaler), name, deflt.Interface().(encoding.TextMarshaler), usage)
 		default:
 			switch kind {
 			case reflect.Bool:
