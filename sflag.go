@@ -14,15 +14,15 @@ import (
 // a comma separated list of three items:
 //   - the name of the flag
 //   - the default value for the flag
-//   - the help message for the flag
+//   - the usage message for the flag
 const TagKey = "flag"
 
-func parseTag(v string) (name string, deflt string, help string) {
+func parseTag(v string) (name string, deflt string, usage string) {
 	parts := strings.SplitN(v, ",", 3)
 	if len(parts) != 3 {
 		panic(fmt.Sprintf("invalid tag value %q", v))
 	}
-	name, deflt, help = parts[0], parts[1], parts[2]
+	name, deflt, usage = parts[0], parts[1], parts[2]
 	return
 }
 
@@ -61,39 +61,39 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 			}
 			continue
 		}
-		name, deflt, help := parseTag(tag)
+		name, deflt, usage := parseTag(tag)
 		if fl := fs.Lookup(name); fl != nil {
 			panic(fmt.Sprintf("flag %q already defined", name))
 		}
 		switch ptrType := reflect.PointerTo(typ); {
 		case ptrType.Implements(flagValue):
 			pv := reflect.New(typ)
-			fs.Var(pv.Interface().(flag.Value), name, help)
+			fs.Var(pv.Interface().(flag.Value), name, usage)
 		case ptrType.Implements(textUnmarshaler) && ptrType.Implements(textMarshaler):
 			pv := reflect.New(typ)
 			pvi := pv.Interface()
-			fs.TextVar(pvi.(encoding.TextUnmarshaler), name, pvi.(encoding.TextMarshaler), help)
+			fs.TextVar(pvi.(encoding.TextUnmarshaler), name, pvi.(encoding.TextMarshaler), usage)
 		default:
 			switch kind {
 			case reflect.Bool:
-				fs.Bool(name, false, help)
+				fs.Bool(name, false, usage)
 			case reflect.Int:
-				fs.Int(name, 0, help)
+				fs.Int(name, 0, usage)
 			case reflect.Uint:
-				fs.Uint(name, 0, help)
+				fs.Uint(name, 0, usage)
 			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				var d time.Duration
 				if typ == reflect.TypeOf(d) {
-					fs.Duration(name, d, help)
+					fs.Duration(name, d, usage)
 				} else {
-					fs.Int64(name, 0, help)
+					fs.Int64(name, 0, usage)
 				}
 			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				fs.Uint64(name, 0, help)
+				fs.Uint64(name, 0, usage)
 			case reflect.Float32, reflect.Float64:
-				fs.Float64(name, 0.0, help)
+				fs.Float64(name, 0.0, usage)
 			case reflect.String:
-				fs.String(name, "", help)
+				fs.String(name, "", usage)
 			default:
 				panic(fmt.Sprintf("invalid type %q for flag %q", typ, name))
 			}
