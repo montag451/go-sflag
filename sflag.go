@@ -37,8 +37,8 @@ func AddFlags(fs *flag.FlagSet, s any) {
 }
 
 var (
-	flagValue = reflect.TypeFor[flag.Value]()
-	textMarshaler = reflect.TypeFor[encoding.TextMarshaler]()
+	flagValue       = reflect.TypeFor[flag.Value]()
+	textMarshaler   = reflect.TypeFor[encoding.TextMarshaler]()
 	textUnmarshaler = reflect.TypeFor[encoding.TextUnmarshaler]()
 )
 
