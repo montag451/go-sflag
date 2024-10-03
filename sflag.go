@@ -1,6 +1,7 @@
 package sflag
 
 import (
+	"encoding"
 	"flag"
 	"fmt"
 	"reflect"
@@ -35,6 +36,12 @@ func AddFlags(fs *flag.FlagSet, s any) {
 	addFlags(fs, &v)
 }
 
+var (
+	flagValue = reflect.TypeFor[flag.Value]()
+	textMarshaler = reflect.TypeFor[encoding.TextMarshaler]()
+	textUnmarshaler = reflect.TypeFor[encoding.TextUnmarshaler]()
+)
+
 func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 	fields := reflect.VisibleFields(v.Type())
 	for _, fi := range fields {
@@ -58,10 +65,15 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 		if fl := fs.Lookup(name); fl != nil {
 			panic(fmt.Sprintf("flag %q already defined", name))
 		}
-		if i := reflect.TypeOf((*flag.Value)(nil)).Elem(); reflect.PointerTo(typ).Implements(i) {
+		switch ptrType := reflect.PointerTo(typ); {
+		case ptrType.Implements(flagValue):
 			pv := reflect.New(typ)
 			fs.Var(pv.Interface().(flag.Value), name, help)
-		} else {
+		case ptrType.Implements(textUnmarshaler) && ptrType.Implements(textMarshaler):
+			pv := reflect.New(typ)
+			pvi := pv.Interface()
+			fs.TextVar(pvi.(encoding.TextUnmarshaler), name, pvi.(encoding.TextMarshaler), help)
+		default:
 			switch kind {
 			case reflect.Bool:
 				fs.Bool(name, false, help)
@@ -83,7 +95,7 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 			case reflect.String:
 				fs.String(name, "", help)
 			default:
-				panic(fmt.Sprintf("invalid type %q for flag %q. It doesn't implements %q or it's not a type recognized by the flag package", typ, name, i))
+				panic(fmt.Sprintf("invalid type %q for flag %q", typ, name))
 			}
 		}
 		if deflt != "" {
