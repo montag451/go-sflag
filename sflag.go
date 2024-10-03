@@ -42,11 +42,10 @@ func addFlags(fs *flag.FlagSet, v *reflect.Value) {
 			continue
 		}
 		typ := fi.Type
-		kind := typ.Kind()
-		if kind == reflect.Pointer {
-			typ = fi.Type.Elem()
-			kind = typ.Kind()
+		for typ.Kind() == reflect.Pointer {
+			typ = typ.Elem()
 		}
+		kind := typ.Kind()
 		tag := fi.Tag.Get(TagKey)
 		if tag == "" {
 			if kind == reflect.Struct {
@@ -130,13 +129,13 @@ func SetFromFlags(s any, fs *flag.FlagSet) {
 		if !fiv.IsZero() && fl.Value.String() == fl.DefValue && !explicit[fl.Name] {
 			return
 		}
-		if fiv.Type() != flv.Type() {
-			if fiv.Kind() == reflect.Pointer {
-				if fiv.IsNil() {
-					fiv.Set(reflect.New(fiv.Type().Elem()))
-				}
-				fiv = fiv.Elem()
+		for flt := flv.Type(); fiv.Type() != flt && fiv.Kind() == reflect.Pointer; {
+			if fiv.IsNil() {
+				fiv.Set(reflect.New(fiv.Type().Elem()))
 			}
+			fiv = fiv.Elem()
+		}
+		if fiv.Type() != flv.Type() {
 			if flv.Kind() == reflect.Pointer {
 				flv = flv.Elem()
 			}
